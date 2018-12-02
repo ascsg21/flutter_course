@@ -24,7 +24,7 @@ class _ProductManagerState extends State<ProductManager> {
   void initState() {
     print('[ProductManager State] initState()');
     super.initState();
-    if(widget.startingProduct != null) {
+    if (widget.startingProduct != null) {
       _products.add(widget.startingProduct);
     }
   }
@@ -35,9 +35,15 @@ class _ProductManagerState extends State<ProductManager> {
     super.didUpdateWidget(oldWidget);
   }
 
-  void _addProducts(Map<String, String> product) {
+  void _addProduct(Map<String, String> product) {
     setState(() {
       _products.add(product);
+    });
+  }
+
+  void _deleteProduct(int index) {
+    setState(() {
+      _products.removeAt(index);
     });
   }
 
@@ -48,9 +54,9 @@ class _ProductManagerState extends State<ProductManager> {
       children: [
         Container(
           margin: EdgeInsets.all(10.0),
-          child: ProductControl(_addProducts),
+          child: ProductControl(_addProduct),
         ),
-        Expanded(child: Products(_products))
+        Expanded(child: Products(_products, deleteProduct: _deleteProduct))
       ],
     );
   }
