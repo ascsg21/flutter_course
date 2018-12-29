@@ -281,13 +281,13 @@ mixin UserModel on ConnectedProductsModel {
     http.Response response;
     if (mode == AuthMode.Login) {
       response = await http.post(
-        'https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key=[API_KEY]',
+        'https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key=[firebase API_KEY]',
         body: json.encode(authData),
         headers: {'Content-Type': 'application/json'},
       );
     } else {
       response = await http.post(
-        'https://www.googleapis.com/identitytoolkit/v3/relyingparty/signupNewUser?key=[API_KEY]',
+        'https://www.googleapis.com/identitytoolkit/v3/relyingparty/signupNewUser?key=[firebase API_KEY]',
         body: json.encode(authData),
         headers: {'Content-Type': 'application/json'},
       );
