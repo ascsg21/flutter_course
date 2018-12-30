@@ -5,8 +5,15 @@ import 'package:map_view/map_view.dart';
 import 'package:http/http.dart' as http;
 
 import '../helpers/ensure-visible.dart';
+import '../../models/location_data.dart';
+import '../../models/product.dart';
 
 class LocationInput extends StatefulWidget {
+  final Function setLocation;
+  final Product product;
+
+  LocationInput(this.setLocation, this.product);
+
   @override
   State<StatefulWidget> createState() {
     return _LocationInputState();
@@ -15,12 +22,16 @@ class LocationInput extends StatefulWidget {
 
 class _LocationInputState extends State<LocationInput> {
   Uri _staticMapUri;
+  LocationData _locationData;
   final FocusNode _addressInputFocusNode = FocusNode();
   final TextEditingController _addressInputController = TextEditingController();
 
   @override
   void initState() {
     _addressInputFocusNode.addListener(_updateLocation);
+    if (widget.product != null) {
+      getStaticMap(widget.product.location.address, false);
+    }
     super.initState();
   }
 
@@ -30,32 +41,49 @@ class _LocationInputState extends State<LocationInput> {
     super.dispose();
   }
 
-  void getStaticMap(String address) async {
+  void getStaticMap(String address, [geocode = true]) async {
     if (address.isEmpty) {
+      setState(() {
+        _staticMapUri = null;
+      });
+      widget.setLocation(null);
       return;
     }
-    final Uri uri = Uri.https(
-      'maps.googleapis.com',
-      '/maps/api/geocode/json',
-      {'address': address, 'key': '[google maps API_KEY]'},
-    );
-    final http.Response response = await http.get(uri);
-    final decodedResponse = json.decode(response.body);
-    // print(decodedResponse);
-    final formattedAddress = decodedResponse['results'][0]['formatted_address'];
-    final coords = decodedResponse['results'][0]['geometry']['location'];
+    if (geocode) {
+      final Uri uri = Uri.https(
+        'maps.googleapis.com',
+        '/maps/api/geocode/json',
+        {'address': address, 'key': '[google maps API_KEY]'},
+      );
+      final http.Response response = await http.get(uri);
+      final decodedResponse = json.decode(response.body);
+      // print(decodedResponse);
+      final formattedAddress =
+          decodedResponse['results'][0]['formatted_address'];
+      final coords = decodedResponse['results'][0]['geometry']['location'];
+      _locationData = LocationData(
+          address: formattedAddress,
+          latitude: coords['lat'],
+          longitude: coords['lng']);
+    } else {
+      _locationData = widget.product.location;
+    }
 
     final StaticMapProvider staticMapViewProvider =
         StaticMapProvider('[google maps API_KEY]');
     final Uri staticMapUri = staticMapViewProvider.getStaticUriWithMarkers(
-      [Marker('position', 'Position', coords['lat'], coords['lng'])],
-      center: Location(coords['lat'], coords['lng']),
+      [
+        Marker('position', 'Position', _locationData.latitude,
+            _locationData.longitude)
+      ],
+      center: Location(_locationData.latitude, _locationData.longitude),
       width: 500,
       height: 300,
       maptype: StaticMapViewType.roadmap,
     );
+    widget.setLocation(_locationData);
     setState(() {
-      _addressInputController.text = formattedAddress;
+      _addressInputController.text = _locationData.address;
       _staticMapUri = staticMapUri;
     });
   }
@@ -75,13 +103,20 @@ class _LocationInputState extends State<LocationInput> {
           child: TextFormField(
             focusNode: _addressInputFocusNode,
             controller: _addressInputController,
+            validator: (String value) {
+              if (_locationData == null || value.isEmpty) {
+                return 'No valid location found.';
+              }
+            },
             decoration: InputDecoration(labelText: 'Address'),
           ),
         ),
         SizedBox(
           height: 10.0,
         ),
-        Image.network(_staticMapUri.toString()),
+        _staticMapUri == null
+            ? Container()
+            : Image.network(_staticMapUri.toString()),
       ],
     );
   }

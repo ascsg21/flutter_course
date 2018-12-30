@@ -11,9 +11,9 @@ class ProductListPage extends StatefulWidget {
   ProductListPage(this.model);
 
   @override
-    State<StatefulWidget> createState() {
-      return _ProductListPageState();
-    }
+  State<StatefulWidget> createState() {
+    return _ProductListPageState();
+  }
 }
 
 class _ProductListPageState extends State<ProductListPage> {
@@ -29,9 +29,11 @@ class _ProductListPageState extends State<ProductListPage> {
       onPressed: () {
         model.selectProduct(model.allProducts[index].id);
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (BuildContext context) {
-            return ProductEditPage();
-          }),
+          MaterialPageRoute(
+            builder: (BuildContext context) {
+              return ProductEditPage();
+            },
+          ),
         ).then((_) {
           model.selectProduct(null);
         });
